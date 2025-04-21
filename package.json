@@ -1,0 +1,39 @@
+{
+  "name": "autogestionpro",
+  "version": "1.0.0",
+  "description": "Sistema de autogestión profesional",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev -p 5004",
+    "start": "echo 'Servidor iniciado en modo producción' && node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo 'Construcción del proyecto simulada'",
+    "deploy": "firebase deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/noemisanalex74/autogestionpro.git"
+  },
+  "keywords": [
+    "autogestión",
+    "firebase",
+    "cloud"
+  ],
+  "author": "Alejandro Fernández",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/noemisanalex74/autogestionpro/issues"
+  },
+  "homepage": "https://github.com/noemisanalex74/autogestionpro#readme",
+  "dependencies": {
+    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
+    "firebase": "^10.9.0",
+    "undici": "^7.8.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.6.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

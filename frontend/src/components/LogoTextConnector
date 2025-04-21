@@ -1,0 +1,103 @@
+import React, { useEffect, useState } from 'react';
+import ParticulasPremium from './ParticulasPremium';
+
+const LogoTextConnector = () => {
+  const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [textPosition, setTextPosition] = useState({ x: 0, y: 0, width: 0, height: 0 });
+
+  // Detectar las posiciones del logo y el texto
+  useEffect(() => {
+    const detectElements = () => {
+      // Buscar el logo por su selector (ajusta según tu estructura)
+      const logoElement = document.querySelector('.logo-agp') || 
+                         document.querySelector('img[alt="AutoGestionPro Logo"]') ||
+                         document.querySelector('img[alt="AGP"]');
+                         
+      // Buscar el título principal
+      const textElement = document.querySelector('.title-autogestionpro') || 
+                         document.querySelector('h1') ||
+                         document.querySelector('.text-cyan-400').parentElement;
+
+      if (logoElement) {
+        const rect = logoElement.getBoundingClientRect();
+        setLogoPosition({
+          x: rect.left + rect.width/2,
+          y: rect.top + rect.height/2,
+          width: rect.width,
+          height: rect.height
+        });
+      }
+
+      if (textElement) {
+        const rect = textElement.getBoundingClientRect();
+        setTextPosition({
+          x: rect.left + rect.width/2,
+          y: rect.top + rect.height/2,
+          width: rect.width,
+          height: rect.height
+        });
+      }
+    };
+
+    // Ejecutar después de que el DOM esté cargado
+    setTimeout(detectElements, 500);
+    
+    // También actualizar en resize
+    window.addEventListener('resize', detectElements);
+    return () => window.removeEventListener('resize', detectElements);
+  }, []);
+
+  return (
+    <>
+      {/* Usar ParticulasPremium con parámetros específicos */}
+      <ParticulasPremium 
+        // Colores que coincidan con los del logo
+        colorPalette={["#22d3ee", "#facc15", "#ec4899"]}
+        // Mayor densidad para más partículas
+        densidad={90}
+        // Velocidad más lenta para un efecto más elegante
+        velocidad={0.3}
+        // Más conexiones visibles
+        conexionesVisibles={0.6}
+        // Brillo intenso
+        glowIntensity={0.9}
+        // Mostrar chispas
+        showSparkles={true}
+        // Fondo transparente para superponerse al fondo existente
+        background="transparent"
+        // Partículas circulares
+        particleShape="circle"
+        // Parámetros adicionales personalizados para ParticulasPremium
+        customParams={{
+          // Centros de atracción fijos en el logo y texto
+          fixedAttractionPoints: [
+            { 
+              x: logoPosition.x, 
+              y: logoPosition.y,
+              strength: 0.5,
+              radius: logoPosition.width * 1.5
+            },
+            {
+              x: textPosition.x,
+              y: textPosition.y,
+              strength: 0.4,
+              radius: textPosition.width * 0.7
+            }
+          ],
+          // Conexiones forzadas entre el logo y el texto
+          forceConnections: true,
+          // Número de conexiones forzadas entre logo y texto
+          forcedConnectionsCount: 8,
+          // Color de las conexiones forzadas
+          forcedConnectionsColors: ["#22d3ee", "#facc15", "#ec4899"],
+          // Ancho de las conexiones
+          forcedConnectionsWidth: 1.5,
+          // Intensidad de los chispazos
+          sparkIntensity: 1.2
+        }}
+      />
+    </>
+  );
+};
+
+export default LogoTextConnector;

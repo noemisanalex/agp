@@ -1,0 +1,86 @@
+/* src/components/Sidebar.css */
+
+.sidebar {
+  @apply fixed top-0 left-0 h-screen bg-gray-900 text-white p-4 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-lg;
+}
+
+.sidebar.collapsed {
+  @apply w-16;
+}
+
+.sidebar.expanded {
+  @apply w-64;
+}
+
+.sidebar-title {
+  @apply text-xl font-bold mb-6 text-pink-400 text-center transition-opacity duration-300;
+}
+
+.sidebar.collapsed .sidebar-title {
+  @apply opacity-0;
+}
+
+.sidebar-list {
+  @apply flex-1 overflow-y-auto space-y-2;
+}
+
+.sidebar-item {
+  @apply group flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-800 hover:text-cyan-400 relative;
+}
+
+.sidebar-item.active {
+  @apply bg-blue-600 text-white font-semibold;
+}
+
+.sidebar.collapsed .sidebar-item .sidebar-tooltip {
+  @apply absolute left-full top-1/2 -translate-y-1/2 ml-3 whitespace-nowrap text-sm bg-black px-2 py-1 rounded shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300;
+}
+
+.sidebar.collapsed .sidebar-item span:not(.sidebar-tooltip) {
+  display: none;
+}
+
+.sidebar .sidebar-list > div {
+  @apply mt-4;
+}
+
+.sidebar .sidebar-list > div:first-child {
+  @apply mt-0;
+}
+
+.sidebar-tooltip {
+  pointer-events: none;
+}
+
+.sidebar-toggle-button {
+  @apply fixed top-4 left-4 z-50 cursor-pointer rounded-full border-4 border-white animate-pulse-slow transition-transform hover:scale-105;
+  width: 48px;
+  height: 48px;
+}
+
+.sidebar-toggle-button img {
+  @apply w-full h-full object-contain;
+  transition: transform 0.2s ease-in-out;
+}
+
+@keyframes float-interactive {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(2px, -2px);
+  }
+}
+
+.sidebar-toggle-button.near-cursor img {
+  animation: float-interactive 1.5s ease-in-out infinite;
+}
+
+/* ==== Nuevas categorías de servicios ==== */
+.sidebar-category {
+  @apply mt-6 text-sm text-gray-400 uppercase tracking-wider px-2;
+}
+
+.sidebar .sidebar-category + .sidebar-item {
+  @apply mt-2;
+}

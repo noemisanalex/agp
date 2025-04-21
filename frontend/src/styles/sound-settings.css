@@ -1,0 +1,173 @@
+/* styles/sound-settings.css */
+.sound-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .sound-toggle-button,
+  .sound-mute-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .sound-toggle-button.enabled {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .sound-toggle-button.disabled {
+    background-color: #f44336;
+    color: white;
+  }
+  
+  .sound-mute-button.unmuted {
+    background-color: #2196F3;
+    color: white;
+  }
+  
+  .sound-mute-button.muted {
+    background-color: #FF9800;
+    color: white;
+  }
+  
+  .sound-volume-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 300px;
+    margin: 10px 0;
+  }
+  
+  .sound-volume-label {
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  
+  .sound-volume-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .sound-volume-slider {
+    flex: 1;
+    height: 5px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ddd;
+    outline: none;
+    border-radius: 5px;
+  }
+  
+  .sound-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #2196F3;
+    cursor: pointer;
+  }
+  
+  .sound-volume-slider::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #2196F3;
+    cursor: pointer;
+  }
+  
+  .sound-volume-percentage {
+    font-size: 12px;
+    margin-top: 5px;
+    text-align: center;
+  }
+  
+  .sound-settings-panel {
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .sound-settings-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .sound-settings-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .sound-toggle-section,
+  .sound-volume-section,
+  .sound-test-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .sound-test-button {
+    padding: 8px 16px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .sound-test-button:hover {
+    background-color: #0b7dda;
+  }
+  
+  .sound-settings-info {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #e3f2fd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  /* Estilos para la página de configuración */
+  .configuration-page {
+    padding: 20px;
+  }
+  
+  .page-title {
+    margin-bottom: 30px;
+    font-size: 28px;
+    color: #333;
+  }
+  
+  .config-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  
+  .config-section {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  
+  .config-section h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 20px;
+  }

@@ -1,0 +1,331 @@
+services:
+  backend:
+    build:
+      context: ./servicios/backend
+    container_name: backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./servicios/backend:/app
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  proxy:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: proxy
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - ./nginx-proxy-manager/data:/data
+      - ./nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel run
+    env_file:
+      - .env
+    volumes:
+      - ./cloudflared/config.yml:/etc/cloudflared/config.yml
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  homeassistant:
+    image: homeassistant/home-assistant:stable
+    container_name: homeassistant
+    ports:
+      - "8123:8123"
+    restart: unless-stopped
+    networks:
+      - agp-net
+    volumes:
+      - /home/alejandro/agp/servicios/homeassistant:/config
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  glances:
+    image: nicolargo/glances:latest
+    container_name: glances
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - GLANCES_OPT=-w
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --label-enable --schedule "0 0 3 * * *" --cleanup
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  code-server:
+    container_name: code-server
+    image: ghcr.io/coder/code-server:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - code-server-project:/home/coder/project
+      - code-server-config:/home/coder/.local
+      - ./:/home/coder/agp:cached
+    environment:
+      - PASSWORD=${CODE_PASSWORD}
+      - TZ=Europe/Madrid
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    volumes:
+      - ./servicios/bases-de-datos/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    volumes:
+      - ./servicios/bases-de-datos/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  redis:
+    image: redis:6.2
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  n8n-worker:
+    image: n8nio/n8n:1.88.0
+    container_name: n8n-worker
+    command: n8n worker
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_HOST=n8n
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - EXECUTIONS_PROCESS=queue
+      - QUEUE_MODE=redis
+      - N8N_SECURE_COOKIE=false
+      - N8N_REDIS_HOST=redis
+    volumes:
+      - ./servicios/bases-de-datos/n8n:/home/node/.n8n
+      - ./servicios/shared:/data/shared
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+  n8n:
+    image: n8nio/n8n:1.88.0
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./servicios/bases-de-datos/n8n:/home/node/.n8n
+      - ./servicios/shared:/data/shared
+    environment:
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_HOST=n8n
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_RUNNERS_ENABLED=true
+      - QUEUE_MODE=redis
+      - N8N_REDIS_HOST=redis
+      - WEBHOOK_URL=${WEBHOOK_URL}
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    ports:
+      - "8222:8090"
+    volumes:
+      - ./servicios/bases-de-datos/vaultwarden:/data
+    environment:
+      - WEBSOCKET_ENABLED=true
+      - ROCKET_PORT=8090  # Indicamos a vaultwarden que use el puerto 8080 internamente
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    environment:
+      - TZ=Europe/Madrid
+      - NODE_RED_ENABLE_SAFE_MODE=false
+      - NODE_RED_BIND=0.0.0.0
+    volumes:
+      - ./servicios/bases-de-datos/nodered:/data
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./servicios/bases-de-datos/portainer:/data
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    volumes:
+      - ./servicios/mosquitto/config:/mosquitto/config
+      - ./servicios/mosquitto/log:/mosquitto/log
+      - ./servicios/mosquitto/data:/mosquitto/data
+    user: "1883"
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - UPLOAD_LIMIT=1G
+    depends_on:
+      - mysql
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./servicios/bases-de-datos/influxdb:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    restart: unless-stopped
+    depends_on:
+      - influxdb
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./servicios/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3100:80"
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+networks:
+  agp-net:
+    external: true
+
+volumes:
+  code-server-project:
+  code-server-config:

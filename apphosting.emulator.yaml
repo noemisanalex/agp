@@ -1,0 +1,48 @@
+# apphosting.emulator.yaml
+app:
+  # Especifica el directorio raíz de tu aplicación
+  rootDirectory: .
+
+  # Comando para iniciar tu aplicación (usando un script simple que existe en tu package.json)
+  startCommand: npm run dev
+
+  # Puerto en el que se ejecutará tu aplicación
+  port: 5002
+
+  # Tiempo máximo de espera para iniciar la aplicación (en milisegundos)
+  startupTimeoutMs: 30000
+
+  # Variables de entorno para el entorno de desarrollo
+  env:
+    NODE_ENV: development
+    FIREBASE_AUTH_EMULATOR_HOST: "localhost:9099"
+    FIRESTORE_EMULATOR_HOST: "localhost:8090"
+    FIREBASE_DATABASE_EMULATOR_HOST: "localhost:9005"
+    FIREBASE_STORAGE_EMULATOR_HOST: "localhost:9199"
+    USE_EMULATOR: "true"
+
+  # Archivos/directorios a ignorar (opcional)
+  ignore:
+    - node_modules
+    - .git
+    - .firebase
+    - firebase-debug.log
+    - firestore-debug.log
+    - ui-debug.log
+
+  # Configuración de monitoreo de archivos para recarga en vivo (opcional)
+  watch:
+    enabled: true
+    excludePaths:
+      - node_modules/**
+      - .git/**
+
+  # Configuración adicional para el emulador
+  # Establece un proceso de cierre más corto para evitar timeouts
+  shutdownTimeoutMs: 5000
+
+env:
+#- variable: ENV_VAR_NAME
+#  value: plaintext value
+#- variable: SECRET_ENV_VAR_NAME
+#  secret: cloud-secret-manager-id

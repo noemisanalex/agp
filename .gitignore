@@ -1,0 +1,93 @@
+# Archivos de entorno y logs
+.env
+*.env
+*.log
+*.bak
+
+# Node / React
+node_modules/
+dist/
+build/
+
+# Docker y servicios
+Dockerfile*
+docker-compose.override.yml
+volumes/
+bases-de-datos/
+**/data/
+**/logs/
+**/cache/
+**/.n8n/
+**/vaultwarden/
+nginx-proxy-manager/letsencrypt/
+mosquitto/data/
+
+# IDEs y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Otros
+coverage/
+*.sqlite
+*.tar
+*.gz
+*.zip
+*.pid
+*.seed
+# Excluir carpetas con permisos denegados
+servicios/postgres/
+servicios/portainer/
+
+# Ignorar configuraciones y claves
+servicios/homeassistant/
+servicios/mysql/
+servicios/postgres/
+servicios/vaultwarden/
+servicios/portainer/
+# Entornos virtuales de Python
+venv/
+env/
+.env/
+.venv/
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Archivos temporales y logs
+*.log
+*.tmp
+logs/
+tmp/
+
+# Dependencias npm/node
+node_modules/
+package-lock.json
+
+# Archivos de configuración local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de base de datos y backups
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.db
+*.sql
+*.backup
+*.dump
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Certificados y secretos
+*.pem
+*.key
+credentials.json

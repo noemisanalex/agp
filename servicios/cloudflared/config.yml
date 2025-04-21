@@ -1,0 +1,39 @@
+tunnel: eyJhIjoiODRlYTlhYzIwYzNiZGM2ZDM5NTdhOGE1MGNiY2RkNjAiLCJ0IjoiOTQwMTkwZjItZGVlNC00NmQ3LWJkNDgtOGM2YzZjNTA4Zjk4IiwicyI6Ik9UaGtaR0U0WXprdE1URXlNaTAwTXpRNExXRTRNek10TWpVNU9XTXdZbUV5TTJabCJ9
+credentials-file: /etc/cloudflared/eyJhIjoiODRlYTlhYzIwYzNiZGM2ZDM5NTdhOGE1MGNiY2RkNjAiLCJ0IjoiOTQwMTkwZjItZGVlNC00NmQ3LWJkNDgtOGM2YzZjNTA4Zjk4IiwicyI6Ik9UaGtaR0U0WXprdE1URXlNaTAwTXpRNExXRTRNek10TWpVNU9XTXdZbUV5TTJabCJ9.json
+
+ingress:
+  - hostname: www.autogestionpro.com
+    service: http://frontend:80
+    originRequest:
+      httpHostHeader: www.autogestionpro.com
+
+  - hostname: backend.autogestionpro.com
+    service: http://backend:3000
+
+  - hostname: home.autogestionpro.com
+    service: http://homeassistant:8123
+    originRequest:
+      httpHostHeader: home.autogestionpro.com
+
+  - hostname: code-server.autogestionpro.com
+    service: http://code-server:8080
+
+  - hostname: mysql.autogestionpro.com
+    service: http://mysql:3306
+
+  - hostname: n8n.autogestionpro.com
+    service: http://n8n:5678
+
+  - hostname: vaultwarden.autogestionpro.com
+    service: http://vaultwarden:80
+
+  - hostname: nodered.autogestionpro.com
+    service: http://nodered:1880
+
+  - hostname: npm.autogestionpro.com
+    service: http://proxy:81
+
+  - hostname: portainer.autogestionpro.com
+    service: http://portainer:9000
+
+  - service: http_status:404
