@@ -1,0 +1,70 @@
+# General
+ENVIRONMENT=development
+DOMINIO_PRINCIPAL=autogestionpro.local
+TZ=Europe/Madrid
+DEBUG=false
+
+# Seguridad
+JWT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+JWT_EXPIRES_IN=7d
+ENCRYPTION_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Cloudflare Tunnel
+CLOUDFLARED_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+# MySQL
+MYSQL_HOST=mysql
+MYSQL_PORT=3306
+MYSQL_USER=agp_user
+MYSQL_PASSWORD=xxxxxxxxxxxxxxxxxxx        # ✅ Coincide con docker-compose.yml
+MYSQL_DATABASE=agp_database
+MYSQL_ROOT_PASSWORD=xxxxxxxxxxxxxxxxxxxxxx# ✅ Coincide con docker-compose.yml
+
+# PostgreSQL
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_USER=agp_user
+POSTGRES_PASSWORD=xxxxxxxxxxxxxxxxxxxx
+POSTGRES_DB=agp_database
+
+# InfluxDB
+INFLUXDB_USERNAME=admin
+INFLUXDB_PASSWORD=xxxxxxxxxxxxxxxxxx           # ✅ Coincide con docker-compose.yml
+INFLUXDB_ORG=autogestionpro
+INFLUXDB_BUCKET=default
+INFLUXDB_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Code Server
+CODE_PASSWORD=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# n8n
+N8N_EMAIL_MODE=smtp
+N8N_DISABLE_PRODUCTION_MAIN_MENU=false
+N8N_BASIC_AUTH_USER=admin
+N8N_BASIC_AUTH_PASSWORD=xxxxxxxxxxxxxxxxxxxxx
+N8N_ENCRYPTION_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+WEBHOOK_URL=http://n8n:5678/
+N8N_SMTP_HOST=smtp.gmail.com
+N8N_SMTP_PORT=465
+N8N_SMTP_SSL=true
+N8N_SMTP_PASS=xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+N8N_SMTP_USER=contacto@autogestionpro.com        # ✅ visible al cliente
+N8N_SMTP_SSL=true
+
+# Node-RED
+NODE_RED_CREDENTIAL_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Vaultwarden
+ADMIN_TOKEN='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+SIGNUPS_ALLOWED=false
+DOMAIN=https://vaultwarden.autogestionpro.com
+LOG_LEVEL=warn
+
+# Mosquitto
+MOSQUITTO_USER=admin
+MOSQUITTO_PASSWORD=xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MOSQUITTO_PASSWORD_FILE=/mosquitto/config/passwords.txt
+
+# DeepSeek API
+DEEPSEEK_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DEEPSEEK_API_URL=https://api.deepseek.com/v1/chat/completions

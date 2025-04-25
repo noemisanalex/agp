@@ -1,0 +1,451 @@
+# --------------------------------------------------------------------------
+# AutogestionPro - Stack de Servicios Docker Compose
+# --------------------------------------------------------------------------
+# Prerrequisitos:
+# 1. Crear red externa: docker network create agp-net
+# 2. Crear archivo .env con las variables necesarias (ver ejemplos abajo)
+# 3. Crear directorios locales para volúmenes (ej: ./servicios/backend, ./nginx-proxy-manager/data, etc.)
+# 4. Asegurarse que los archivos de configuración existan donde se mapean
+#    (ej: ./servicios/cloudflared/config.yml, ./servicios/mosquitto/config/mosquitto.conf, ./servicios/telegraf/telegraf.conf)
+# --------------------------------------------------------------------------
+
+services:
+  # --- Backend Personalizado ---
+  backend:
+    build:
+      context: ./servicios/backend
+    container_name: backend
+    # Puerto expuesto para desarrollo/pruebas o si no se usa proxy inverso
+    # Si se accede exclusivamente via NPM/Cloudflared, considera eliminarlo.
+    volumes:
+      - ./servicios/backend:/app
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # --- Proxy Inverso ---
+  proxy:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: proxy
+    restart: unless-stopped
+    ports:
+      # Puertos estándar para tráfico web HTTP/HTTPS
+      - '80:80'
+      - '443:443'
+      # Puerto para la interfaz de administración de NPM
+      - '81:81'
+    volumes:
+      - ./servicios/proxy/data:/data
+      - ./servicios/proxy/letsencrypt:/etc/letsencrypt
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # --- Túnel Cloudflare ---
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN}
+    env_file:
+      - .env
+    volumes:
+      # config.yml debe contener el tunnel ID/token y la ruta al fichero de credenciales si se usa ese método
+      - ./servicios/cloudflared/config.yml:/etc/cloudflared/config.yml:ro
+      # Directorio para el cert.pem o fichero de credenciales .json
+      - ./servicios/cloudflared:/etc/cloudflared
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # --- Automatización del Hogar ---
+  homeassistant:
+    image: homeassistant/home-assistant:stable
+    container_name: homeassistant
+    # Acceso directo - También puede configurarse en el proxy si se prefiere
+    #ports:
+    #  - "8123:8123"
+    restart: unless-stopped
+    networks:
+      - agp-net
+    volumes:
+      - ./servicios/homeassistant:/config
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false" # Deshabilitado por el usuario
+
+  # --- Monitorización del Sistema ---
+  glances:
+    image: nicolargo/glances:latest
+    container_name: glances
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # Habilita la interfaz web
+      - GLANCES_OPT=-w
+    # Puerto para acceder a la interfaz web de Glances
+    # Considera eliminarlo y acceder via proxy (NPM)
+    #ports:
+    #  - "61208:61208" # Puerto estándar de Glances WebUI
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # --- Actualizador Automático de Contenedores ---
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    # Revisa cada día a las 3 AM, actualiza solo los etiquetados y limpia imágenes antiguas
+    command: --label-enable --schedule "0 0 3 * * *" --cleanup
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true" # Permitir que Watchtower se actualice a sí mismo
+
+  # --- Entorno de Desarrollo ---
+  code-server:
+    container_name: code-server
+    image: ghcr.io/coder/code-server:latest
+    # Acceso directo - También puede configurarse en el proxy si se prefiere
+    ports:
+      - "8080:8080"
+    volumes:
+      - code-server-config:/home/coder/.local
+      - ./:/home/coder/agp:cached
+      - ./servicios/code-server-local:/home/coder/.local/share
+    environment:
+      # La contraseña se lee desde .env
+      - PASSWORD=${CODE_PASSWORD}
+      - TZ=Europe/Madrid # Zona horaria desde .env, con fallback
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # --- Bases de Datos ---
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    volumes:
+      - ./servicios/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false" # Deshabilitado por el usuario
+
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    volumes:
+      - ./servicios/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false" # Deshabilitado por el usuario
+
+  # --- Caché en Memoria ---
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - ./servicios/redis:/data
+    command: redis-server --save 60 1 --loglevel warning
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
+
+  # --- Automatización y Flujos de Trabajo (n8n) ---
+  n8n:
+    image: n8nio/n8n:1.88.0 # Considera usar 'n8nio/n8n:latest' para actualizaciones
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+    - "5678:5678" # Temporalmente exponer el puerto para pruebas
+    volumes:
+      - ./servicios/n8n:/home/node/.n8n
+      - ./servicios/shared:/data/shared # Descomentar si necesitas volumen compartido
+    entrypoint: ["node", "/usr/local/lib/node_modules/n8n/bin/n8n", "start"]  # Esto es clave
+    depends_on:
+      - redis
+    environment:
+      # Credenciales leidas desde .env
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      # Clave de encriptación desde .env
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # Deshabilitar validación de permisos de archivo (importante para solucionar el error)
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+      # Configuración para modo Queue con Redis y Runners
+      #- EXECUTIONS_MODE=queue
+      #- QUEUE_MODE=redis
+      - N8N_REDIS_HOST=redis
+      - N8N_RUNNERS_ENABLED=true
+      # No forzar HTTPS si el proxy inverso lo maneja
+      - N8N_SECURE_COOKIE=false
+      # URLs internas, el proxy se encarga del acceso externo
+      - N8N_HOST=n8n
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      # - WEBHOOK_URL=${WEBHOOK_URL}
+      - TZ=Europe/Madrid
+    env_file:
+      - .env
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false" # Deshabilitado por el usuario
+    # NO expongas puertos aquí, usa el proxy inverso (NPM) para acceder a n8n
+
+  n8n-worker:
+    image: n8nio/n8n:1.88.0 # Usa la misma versión que n8n principal
+    container_name: n8n-worker
+    restart: unless-stopped
+    command: n8n worker # Comando simplificado
+    depends_on:
+      - redis
+      - n8n # Espera a que el principal esté listo (aunque puede arrancar antes)
+    volumes:
+      - ./servicios/n8n:/home/node/.n8n # Comparte configuración
+      - ./servicios/shared:/data/shared # Descomentar si necesitas volumen compartido
+    environment:
+      # Las mismas credenciales y clave que el principal
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # Modo Queue
+      - EXECUTIONS_PROCESS=queue # Indica que este es un worker de queue
+      - QUEUE_MODE=redis
+      - N8N_REDIS_HOST=redis
+      # URLs internas
+      - N8N_HOST=n8n
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - TZ=Europe/Madrid
+    env_file:
+      - .env
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false" # Deshabilitado por el usuario
+
+  # --- Gestor de Contraseñas ---
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    ports:
+      - "8090:80"  # Exponer puerto temporalmente
+    volumes:
+      - ./servicios/vaultwarden:/data
+    environment:
+      # --- Configuración Leída desde .env ---
+      - TZ=${TZ}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - SIGNUPS_ALLOWED=${SIGNUPS_ALLOWED}
+      - DOMAIN=${DOMAIN} # Importante para que funcione correctamente detrás del proxy
+      - LOG_LEVEL=${LOG_LEVEL:-warn}
+
+      # --- Configuración Directa ---
+      - WEBSOCKET_ENABLED=true # Requiere configuración del proxy inverso
+      - LOG_FILE=/data/vaultwarden.log
+
+      # --- Configuración Opcional SMTP (Leída desde .env) ---
+      # - SMTP_HOST=${SMTP_HOST}
+      # - SMTP_FROM=${SMTP_FROM}
+      # - SMTP_PORT=${SMTP_PORT}
+      # - SMTP_SECURITY=${SMTP_SECURITY}
+      # - SMTP_USERNAME=${SMTP_USERNAME}
+      # - SMTP_PASSWORD=${SMTP_PASSWORD}
+      # - INVITATIONS_ALLOWED=${INVITATIONS_ALLOWED:-false}
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    # NO exponer puertos directamente, acceder vía proxy (NPM) configurado para el DOMAIN
+
+  # --- Node-RED ---
+  nodered:
+    image: nodered/node-red:latest
+    container_name: nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"  # Exponer puerto temporalmente
+    environment:
+      - TZ=Europe/Madrid
+      - NODE_RED_ENABLE_SAFE_MODE=false
+      - NODE_RED_CREDENTIAL_SECRET=${NODE_RED_CREDENTIAL_SECRET} # Desde .env
+    volumes:
+      - ./servicios/nodered:/data
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
+    # NO exponer puertos directamente, acceder vía proxy (NPM)
+
+  # --- Gestión de Docker ---
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      # Puertos para acceso directo a Portainer UI (HTTP y HTTPS)
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./servicios/portainer:/data
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # --- Broker MQTT ---
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: unless-stopped
+    volumes:
+      # Asegúrate que mosquitto.conf existe y está configurado correctamente
+      - ./servicios/mosquitto/config:/mosquitto/config
+      - ./servicios/mosquitto/log:/mosquitto/log
+      - ./servicios/mosquitto/data:/mosquitto/data
+    # Puerto estándar MQTT. Añadir 8883 (TLS) o 9001 (WebSockets) si se configuran
+    ports:
+      - "1883:1883"
+    env_file:
+      # .env se carga, pero la configuración principal suele ir en mosquitto.conf
+      - .env
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
+
+  # --- Gestor de Bases de Datos MySQL (Web) ---
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      # Conecta al servicio 'mysql' en la misma red Docker
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      # Opcional: Aumentar límite de subida
+      - UPLOAD_LIMIT=1G
+    depends_on:
+      - mysql
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    # NO exponer puertos directamente, acceder vía proxy (NPM)
+
+  # --- Base de Datos Time-Series ---
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    restart: unless-stopped
+    # Puerto para la API y UI de InfluxDB
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./servicios/influxdb:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
+
+  # --- Recolector de Métricas ---
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    restart: unless-stopped
+    depends_on:
+      # Asegurar que InfluxDB esté disponible (aunque Telegraf reintenta)
+      influxdb:
+        condition: service_healthy # Espera al healthcheck de InfluxDB
+    volumes:
+      # Acceso al socket de Docker para métricas de contenedores
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Asegúrate que telegraf.conf existe y está configurado para enviar a 'influxdb:8086'
+      - ./servicios/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # --- Frontend Personalizado ---
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend # Asegúrate que este directorio existe con un Dockerfile
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+    - "3100:80"
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    # NO exponer puertos directamente, acceder vía proxy (NPM)
+
+  # --- Monitor de Uptime ---
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - ./servicios/uptime-kuma:/app/data
+    # Puerto para acceso directo (Host:Contenedor). Puede ser proxied.
+    ports:
+      - "3002:3001" # Acceso en http://<host>:3002
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
+
+# --- Definición de Redes ---
+networks:
+  agp-net:
+    # Indica que la red 'agp-net' debe existir previamente.
+    # Si quieres que este compose la cree, comenta 'external: true'.
+    external: true
+    # Si no es externa, puedes darle un nombre específico aquí:
+    # name: mi-red-personalizada
+
+# --- Definición de Volúmenes Nombrados ---
+# Usados por code-server en este ejemplo. Docker los gestiona.
+volumes:
+  code-server-config:

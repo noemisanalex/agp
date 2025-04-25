@@ -1,0 +1,42 @@
+tunnel: eyJhIjoiODRlYTlhYzIwYzNiZGM2ZDM5NTdhOGE1MGNiY2RkNjAiLCJ0IjoiOTQwMTkwZjItZGVlNC00NmQ3LWJkNDgtOGM2YzZjNTA4Zjk4IiwicyI6Ik9UaGtaR0U0WXprdE1URXlNaTAwTXpRNExXRTRNek10TWpVNU9XTXdZbUV5TTJabCJ9
+#credentials-file: /etc/cloudflared/autogestionpro.json
+
+ingress:
+  - hostname: www.autogestionpro.com
+    service: http://frontend:80
+    originRequest:
+      noTLSVerify: true
+
+  - hostname: backend.autogestionpro.com
+    service: http://backend:3000
+    originRequest:
+      httpHostHeader: backend.autogestionpro.com
+
+  - hostname: code.autogestionpro.com
+    service: http://code-server:8080
+
+  - hostname: phpmyadmin.autogestionpro.com
+    service: http://phpmyadmin:80
+
+  - hostname: n8n.autogestionpro.com
+    service: http://n8n:5678
+
+  - hostname: portainer.autogestionpro.com
+    service: http://portainer:9000
+
+  - hostname: vaultwarden.autogestionpro.com
+    service: http://vaultwarden:80
+
+  - hostname: nodered.autogestionpro.com
+    service: http://nodered:1880
+
+  - hostname: home.autogestionpro.com
+    service: http://homeassistant:8123
+
+  - hostname: uptime.autogestionpro.com
+    service: http://uptime-kuma:3001
+
+  - hostname: metrics.autogestionpro.com
+    service: http://influxdb:8086
+
+  - service: http_status:404

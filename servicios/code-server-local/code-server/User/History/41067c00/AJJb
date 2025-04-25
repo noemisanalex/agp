@@ -1,0 +1,73 @@
+# General
+ENVIRONMENT=development
+DOMINIO_PRINCIPAL=autogestionpro.local
+TZ=Europe/Madrid
+DEBUG=false
+
+# Seguridad
+JWT_SECRET=85fc667c63b5ac215b29f98d46deee01fced4c38dff62320d9b405a836f327c2
+JWT_EXPIRES_IN=7d
+ENCRYPTION_KEY=gsethgertrtyyrt3654345346rgfgWEEWdrr
+# Cloudflare Tunnel
+CLOUDFLARED_TOKEN=eyJhIjoiODRlYTlhYzIwYzNiZGM2ZDM5NTdhOGE1MGNiY2RkNjAiLCJ0IjoiOTQwMTkwZjItZGVlNC00NmQ3LWJkNDgtOGM2YzZjNTA4Zjk4IiwicyI6Ik1qZzVOakUzTXpNdE5tVXhOQzAwT0dVd0xUZzBabVF0TkdabU5HVTROamhrTkRVNSJ9
+
+
+# MySQL
+MYSQL_HOST=mysql
+MYSQL_PORT=3306
+MYSQL_USER=agp_user
+MYSQL_PASSWORD=+OwvyukEd9            # ✅ Coincide con docker-compose.yml
+MYSQL_DATABASE=agp_database
+MYSQL_ROOT_PASSWORD=root_password    # ✅ Coincide con docker-compose.yml
+
+# PostgreSQL
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_USER=agp_user
+POSTGRES_PASSWORD=Uf}SwiHoBlob5
+POSTGRES_DB=agp_database
+
+# InfluxDB
+INFLUXDB_USERNAME=admin
+INFLUXDB_PASSWORD=admin123           # ✅ Coincide con docker-compose.yml
+INFLUXDB_ORG=autogestionpro
+INFLUXDB_BUCKET=default
+INFLUXDB_TOKEN=dTT31d2j3X6qxYjtDQNreLBjrIXRYJs4wRCcjVQo4VgFqx-r58Xpu5rfjo3lBrR7rrBaiuGXJ7zLZXM7eErQ4w==
+
+# Code Server
+CODE_PASSWORD=dev_code_2025 #26fc7ba8979f5142a94f7eacdc60b84b1c79922ef4d6d0f16f1648fef64f2a36
+
+# n8n
+N8N_EMAIL_MODE=smtp
+N8N_DISABLE_PRODUCTION_MAIN_MENU=false
+N8N_BASIC_AUTH_USER=admin
+N8N_BASIC_AUTH_PASSWORD=dev_n8n_2025
+N8N_ENCRYPTION_KEY=fb15e8dc902ebf7ec67886fa96027602c54f540c69da1d9a9f8cda64c5b1c67e
+WEBHOOK_URL=http://n8n:5678/
+N8N_SMTP_HOST=smtp.gmail.com
+N8N_SMTP_PORT=465
+N8N_SMTP_USER=a.fernandez@autogestionpro.com
+N8N_SMTP_SSL=true
+N8N_ENCRYPTION_KEY=fb15e8dc902ebf7ec67886fa96027602c54f540c69da1d9a9f8cda64c5b1c67e
+# Node-RED
+NODE_RED_CREDENTIAL_SECRET=59d92485bcb9fd8a3de39b2b01774d79a6cb8d42631f585e223bf2b6e4d519e2
+
+# Vaultwarden
+ADMIN_TOKEN='$argon2id$v=19$m=65536,t=2,p=1$ZjU1YmI5NTBhZjJkN2JkYzYzZTc3OTVkZGQ1YzMwYzc$KVBQTIMIYlhu8D57i9dqP1OQKi9uHpqwM2PL+caIXyY'
+SIGNUPS_ALLOWED=false
+DOMAIN=https://vaultwarden.autogestionpro.com
+LOG_LEVEL=warn
+
+# Mosquitto
+MOSQUITTO_USER=admin
+MOSQUITTO_PASSWORD=11wzjkeKVsOj0dUuPhKbDZvQQ255R8td
+MOSQUITTO_PASSWORD_FILE=/mosquitto/config/passwords.txt
+
+# SMTP
+SMTP_USER=contacto@autogestionpro.com
+SMTP_PASS=epih ojif nihw zjem
+
+# DeepSeek API
+DEEPSEEK_API_KEY=sk-b31791ededf1409faf006177d278c62e
+DEEPSEEK_API_URL=https://api.deepseek.com/v1/chat/completions
+

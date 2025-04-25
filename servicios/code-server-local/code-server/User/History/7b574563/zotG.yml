@@ -1,0 +1,19 @@
+tunnel: eyJhIjoiODRlYTlhYzIwYzNiZGM2ZDM5NTdhOGE1MGNiY2RkNjAiLCJ0IjoiOTQwMTkwZjItZGVlNC00NmQ3LWJkNDgtOGM2YzZjNTA4Zjk4IiwicyI6Ik1qZzVOakUzTXpNdE5tVXhOQzAwT0dVd0xUZzBabVF0TkdabU5HVTROamhrTkRVNSJ9
+credentials-file: /etc/cloudflared/940190f2-dee4-46d7-bd48-8c6c6c508f98.json
+
+ingress:
+  - hostname: www.autogestionpro.com
+    service: http://frontend:3100
+  - hostname: n8n.autogestionpro.com
+    service: http://n8n:5678
+  - hostname: vaultwarden.autogestionpro.com
+    service: http://vaultwarden:80
+  - hostname: portainer.autogestionpro.com
+    service: http://portainer:9000
+  - hostname: code.autogestionpro.com
+    service: http://code-server:8080
+  - hostname: proxy.autogestionpro.com
+    service: http://proxy:81
+  - hostname: uptime.autogestionpro.com
+    service: http://uptime-kuma:3001
+  - service: http_status:404

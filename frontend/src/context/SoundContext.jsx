@@ -1,141 +1,209 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Definir los sonidos disponibles y sus rutas
-const SOUNDS = {
- // Sonidos de UI básica
- click: '/sonidos/click.mp3',
- hover: '/sonidos/hover.mp3',
- switch: '/sonidos/switch.mp3',
- slide: '/sonidos/slide.mp3',
- 
- // Notificaciones
- notification: '/sonidos/notification.mp3',
- success: '/sonidos/success.mp3',
- error: '/sonidos/error.mp3',
- warning: '/sonidos/warning.mp3',
- 
- // Transiciones y navegación
- transition: '/sonidos/transition.mp3',
- login: '/sonidos/login.mp3',
- logout: '/sonidos/logout.mp3',
- 
- // Otros sonidos
- achievement: '/sonidos/achievement.mp3',
- welcome: '/sonidos/welcome.mp3'
-};
-
+// Crear el contexto
 const SoundContext = createContext();
 
-export const SoundProvider = ({ children }) => {
- const [enabled, setEnabled] = useState(true);
- const [volume, setVolume] = useState(0.5);
- const [isMuted, setIsMuted] = useState(false);
- const [audioCache, setAudioCache] = useState({});
-
- // Cargar configuración desde localStorage
- useEffect(() => {
-   const stored = JSON.parse(localStorage.getItem('soundSettings'));
-   if (stored) {
-     setEnabled(stored.enabled !== undefined ? stored.enabled : true);
-     setVolume(stored.volume !== undefined ? stored.volume : 0.5);
-     setIsMuted(stored.muted !== undefined ? stored.muted : false);
-   }
- }, []);
-
- // Guardar configuración en localStorage
- useEffect(() => {
-   localStorage.setItem('soundSettings', JSON.stringify({ 
-     enabled, 
-     volume,
-     muted: isMuted
-   }));
- }, [enabled, volume, isMuted]);
-
- // Inicializar la caché de audio
- useEffect(() => {
-   const newCache = {};
-   
-   // Precargar sonidos
-   Object.entries(SOUNDS).forEach(([key, path]) => {
-     try {
-       const audio = new Audio(path);
-       audio.preload = 'auto';
-       audio.volume = volume;
-       newCache[key] = audio;
-     } catch (error) {
-       console.warn(`Error al precargar el sonido ${key}:`, error);
-     }
-   });
-   
-   setAudioCache(newCache);
-   
-   // Limpiar al desmontar
-   return () => {
-     Object.values(newCache).forEach(audio => {
-       try {
-         audio.pause();
-         audio.src = '';
-       } catch (e) {
-         // Ignorar errores de limpieza
-       }
-     });
-   };
- }, []);
-
- // Actualizar volumen en todos los sonidos cuando cambia
- useEffect(() => {
-   Object.values(audioCache).forEach(audio => {
-     audio.volume = volume;
-   });
- }, [volume, audioCache]);
-
- // Función para reproducir sonidos
- const playSound = (soundName) => {
-   if (!enabled || isMuted) return;
-   
-   const audio = audioCache[soundName];
-   if (!audio) {
-     console.warn(`Sonido "${soundName}" no encontrado`);
-     return;
-   }
-   
-   try {
-     // Reiniciar el audio para permitir reproducción repetida
-     audio.currentTime = 0;
-     audio.play().catch(error => {
-       console.warn(`Error al reproducir sonido ${soundName}:`, error);
-     });
-   } catch (error) {
-     console.warn(`Error al reproducir sonido ${soundName}:`, error);
-   }
- };
-
- // Función para silenciar/activar sonido
- const toggleMute = () => {
-   setIsMuted(prev => !prev);
- };
-
- // Verificar si existe un sonido
- const hasSound = (soundName) => {
-   return !!audioCache[soundName];
- };
-
- return (
-   <SoundContext.Provider value={{ 
-     enabled, 
-     setEnabled, 
-     volume, 
-     setVolume,
-     isMuted,
-     setIsMuted,
-     toggleMute,
-     playSound,
-     hasSound,
-     availableSounds: Object.keys(SOUNDS)
-   }}>
-     {children}
-   </SoundContext.Provider>
- );
+// Hook personalizado para usar el contexto
+export const useSound = () => {
+  const context = useContext(SoundContext);
+  if (!context) {
+    throw new Error('useSound debe ser usado dentro de un SoundProvider');
+  }
+  return context;
 };
 
-export const useSoundContext = () => useContext(SoundContext);
+// Proveedor del contexto
+export const SoundProvider = ({ children }) => {
+  const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(0.5); // Valor por defecto 50%
+  const [audioContext, setAudioContext] = useState(null);
+  const [audioBuffers, setAudioBuffers] = useState({});
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Sonidos predefinidos (rutas a archivos de audio)
+  const SOUNDS = {
+    click: "/sonidos/click.mp3",
+    hover: "/sonidos/hover.mp3",
+    success: "/sonidos/success.mp3",
+    error: "/sonidos/error.mp3",
+    notification: "/sonidos/notification.mp3",
+    spark: "/sonidos/spark.mp3"
+  };
+
+  // Inicializar el contexto de audio
+  useEffect(() => {
+    try {
+      // Cargar preferencias
+      const savedMuted = localStorage.getItem('appMuted');
+      const savedVolume = localStorage.getItem('appVolume');
+      
+      if (savedMuted !== null) {
+        setIsMuted(savedMuted === 'true');
+      }
+      
+      if (savedVolume !== null) {
+        setVolume(parseFloat(savedVolume));
+      }
+
+      // Verificar si el navegador soporta Web Audio API
+      if (typeof window !== 'undefined' && window.AudioContext) {
+        const newAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        setAudioContext(newAudioContext);
+        
+        // Precargar sonidos comunes
+        const preloadSounds = async () => {
+          try {
+            const bufferPromises = Object.entries(SOUNDS).map(async ([key, url]) => {
+              try {
+                const response = await fetch(url);
+                // Verificar si la respuesta es exitosa
+                if (!response.ok) {
+                  console.warn(`No se pudo cargar el sonido ${key} desde ${url}`);
+                  return [key, null];
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await newAudioContext.decodeAudioData(arrayBuffer);
+                return [key, audioBuffer];
+              } catch (err) {
+                console.warn(`Error cargando sonido ${key}:`, err);
+                return [key, null];
+              }
+            });
+            
+            const buffers = await Promise.all(bufferPromises);
+            const bufferMap = Object.fromEntries(buffers);
+            setAudioBuffers(bufferMap);
+            setIsInitialized(true);
+          } catch (error) {
+            console.error("Error precargando sonidos:", error);
+          }
+        };
+        
+        preloadSounds();
+      } else {
+        console.warn("Web Audio API no soportada en este navegador");
+      }
+    } catch (error) {
+      console.error("Error inicializando Audio Context:", error);
+    }
+    
+    return () => {
+      // Limpiar recursos al desmontar
+      if (audioContext && audioContext.state !== 'closed') {
+        try {
+          audioContext.close();
+        } catch (error) {
+          console.error("Error cerrando Audio Context:", error);
+        }
+      }
+    };
+  }, []);
+  
+  // Guardar preferencias cuando cambien
+  useEffect(() => {
+    try {
+      localStorage.setItem('appMuted', isMuted.toString());
+      localStorage.setItem('appVolume', volume.toString());
+      
+      // Aplicar a todos los elementos de audio en la página
+      const audioElements = document.querySelectorAll('audio, video');
+      audioElements.forEach(el => {
+        el.muted = isMuted;
+        el.volume = volume;
+      });
+    } catch (error) {
+      console.error("Error guardando preferencias de audio:", error);
+    }
+  }, [isMuted, volume]);
+
+  // Función para reproducir un sonido
+  const playSound = (soundKey) => {
+    try {
+      if (isMuted || !audioContext || !isInitialized) {
+        return;
+      }
+      
+      // Verificar si el buffer existe
+      const buffer = audioBuffers[soundKey];
+      if (!buffer) {
+        console.warn(`Sonido "${soundKey}" no encontrado o no cargado correctamente`);
+        return;
+      }
+      
+      // Reanudar el contexto si está suspendido (políticas de autoplay)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      // Crear y conectar nodos para reproducir el sonido
+      const source = audioContext.createBufferSource();
+      source.buffer = buffer;
+      
+      // Ajustar volumen
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = volume;
+      
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Reproducir y manejar errores
+      source.start(0);
+      
+      // Limpiar después de reproducir
+      source.onended = () => {
+        source.disconnect();
+        gainNode.disconnect();
+      };
+    } catch (error) {
+      console.error(`Error reproduciendo sonido "${soundKey}":`, error);
+    }
+  };
+
+  // Funciones específicas para cada tipo de sonido
+  const playClickSound = () => playSound('click');
+  const playHoverSound = () => playSound('hover');
+  const playSuccessSound = () => playSound('success');
+  const playErrorSound = () => playSound('error');
+  
+  // Función para sonidos de notificación (puede aceptar diferentes tipos)
+  const playNotificationSound = (type = 'notification') => {
+    try {
+      if (SOUNDS[type]) {
+        playSound(type);
+      } else {
+        playSound('notification');
+      }
+    } catch (error) {
+      console.error(`Error en playNotificationSound (${type}):`, error);
+      // Intentar reproducir el sonido de notificación predeterminado como fallback
+      try {
+        playSound('notification');
+      } catch (fallbackError) {
+        console.error("Error en fallback de sonido:", fallbackError);
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
+
+  return (
+    <SoundContext.Provider value={{
+      isMuted,
+      volume,
+      toggleMute,
+      setVolume,
+      playClickSound,
+      playHoverSound,
+      playSuccessSound,
+      playErrorSound,
+      playNotificationSound,
+      isInitialized
+    }}>
+      {children}
+    </SoundContext.Provider>
+  );
+};
+
+export default SoundContext;

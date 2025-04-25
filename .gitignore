@@ -91,3 +91,25 @@ Thumbs.db
 *.pem
 *.key
 credentials.json
+servicios/proxy/letsencrypt/
+servicios/redis/dump.rdb
+# Archivos sensibles o temporales
+.env
+.env*
+*.log
+.DS_Store
+
+# Node & frontend
+node_modules/
+dist/
+build/
+
+# Docker y volúmenes
+servicios/redis/
+servicios/influxdb/
+servicios/n8n/
+servicios/code-server-local/
+servicios/postgres/
+servicios/mysql/
+servicios/uptime-kuma/
+servicios/cloudflared/letsencrypt/

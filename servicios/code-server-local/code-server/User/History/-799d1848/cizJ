@@ -1,0 +1,10 @@
+# --- Etapa final: NGINX ---
+    FROM nginx:stable-alpine
+
+    COPY --from=builder /app/dist /usr/share/nginx/html
+    COPY nginx.conf /etc/nginx/nginx.conf
+    
+    EXPOSE 3100
+    
+    # Único CMD necesario: Modifica el puerto y arranca NGINX
+    CMD ["sh", "-c", "sed -i 's/listen 80;/listen 3100;/' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]

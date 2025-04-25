@@ -1,5 +1,5 @@
 // src/components/Sidebar.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Database,
   Globe,
@@ -9,11 +9,13 @@ import {
   Server,
   TerminalSquare,
   Package2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, UNSAFE_NavigationContext } from 'react-router-dom';
 
 const dashboardServices = {
-  Infraestructura: [
+  'Infraestructura': [
     {
       key: 'portainer',
       name: 'Portainer',
@@ -29,7 +31,7 @@ const dashboardServices = {
       icon: <Database size={18} />,
     },
   ],
-  Automatización: [
+  'Automatización': [
     {
       key: 'n8n',
       name: 'n8n',
@@ -37,24 +39,39 @@ const dashboardServices = {
       urlLocal: 'http://localhost:5678',
       icon: <Globe size={18} />,
     },
+    {
+      key: 'nodered',
+      name: 'Node-RED',
+      urlSeguro: 'https://node.autogestionpro.com',
+      urlLocal: 'http://localhost:1880',
+      icon: <Cpu size={18} />,
+    },
+    {
+      key: 'homeassistant',
+      name: 'Home Assistant',
+      urlSeguro: 'https://home.autogestionpro.com',
+      urlLocal: 'http://localhost:8123',
+      icon: <Settings size={18} />,
+    },
   ],
-  Seguridad: [
+  'Seguridad': [
     {
       key: 'vaultwarden',
       name: 'Vaultwarden',
       urlSeguro: 'https://vaultwarden.autogestionpro.com',
-      urlLocal: 'http://localhost:8080',
+      urlLocal: 'http://localhost:8090',
       icon: <Shield size={18} />,
     },
   ],
-  'IA y Backend': [
+  'Backend': [
     {
-      key: 'ia-service',
-      name: 'IA Service',
-      urlSeguro: 'https://ia.autogestionpro.com',
-      urlLocal: 'http://localhost:5005',
-      icon: <Cpu size={18} />,
+      key: 'telegram',
+      name: 'Telegram Web',
+      urlSeguro: 'https://web.telegram.org/k/',
+      urlLocal: 'https://web.telegram.org/k/',
+      icon: <MessageSquare size={18} />,
     },
+    
     {
       key: 'code-server',
       name: 'Code Server',
@@ -90,8 +107,8 @@ const dashboardServices = {
 
 const Sidebar = ({ onCollapsedChange, width }) => {
   const [collapsed, setCollapsed] = useState(width <= 70);
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigator = useContext(UNSAFE_NavigationContext).navigator;
 
   useEffect(() => {
     onCollapsedChange(collapsed);
@@ -110,19 +127,31 @@ const Sidebar = ({ onCollapsedChange, width }) => {
     (async () => {
       const online = await testUrl(service.urlSeguro);
       const finalUrl = online ? service.urlSeguro : service.urlLocal;
-      navigate(`/dashboard/home?iframe=${encodeURIComponent(finalUrl)}`);
+      navigator.push(`/dashboard/home?iframe=${encodeURIComponent(finalUrl)}&servicio=${service.key}`);
     })();
   };
 
-  const toggleSidebar = () => setCollapsed(!collapsed);
+  const toggleSidebar = () => setCollapsed((prev) => {
+    const newState = !prev;
+    localStorage.setItem('sidebarCollapsed', newState);
+    return newState;
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    if (saved !== null) setCollapsed(saved === 'true');
+  }, []);
 
   return (
-    <div className={`fixed top-0 left-0 h-screen ${collapsed ? 'w-16' : `w-[${width}px]`} bg-gray-900 text-white p-4 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-lg`} style={{ width: collapsed ? '70px' : `${width}px` }}>
-      <div className="sidebar-toggle-button animate-float hover:scale-105 absolute top-4 right-4 z-10" onClick={toggleSidebar} title={collapsed ? 'Expandir menú' : 'Colapsar menú'}>
-        <img src="/imagenes/rueda.gif" alt="Toggle Sidebar" className="w-8 h-8" />
+    <div
+      className={`fixed top-0 left-0 h-screen bg-gray-900 text-white p-4 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-xl ${collapsed ? 'w-[70px]' : `w-[${width}px]`}`}
+      style={{ width: collapsed ? '70px' : `${width}px` }}
+    >
+      <div className="absolute top-4 right-4 z-10 cursor-pointer" onClick={toggleSidebar} title={collapsed ? 'Expandir menú' : 'Colapsar menú'}>
+        {collapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 pb-20">
+      <div className="flex-1 overflow-y-auto space-y-2 pb-20 mt-10">
         {Object.entries(dashboardServices).map(([categoria, items]) => (
           <div key={categoria} className="mt-4 first:mt-0">
             {!collapsed && (
@@ -155,7 +184,7 @@ const Sidebar = ({ onCollapsedChange, width }) => {
             className={`group flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-800 hover:text-cyan-400 relative ${
               location.pathname.includes('/configuracion') ? 'bg-blue-600 text-white font-semibold' : ''
             }`}
-            onClick={() => navigate('/dashboard/configuracion')}
+            onClick={() => navigator.push('/dashboard/configuracion')}
           >
             <Settings size={18} />
             {!collapsed && <span>Configuración</span>}

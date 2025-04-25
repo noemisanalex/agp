@@ -11,7 +11,7 @@ module.exports = {
   output: {
     filename: 'bundle.[contenthash].js',
     path: path.resolve(__dirname, 'dist'),
-    publicPath: '/', // IMPORTANTE para single-page apps y rutas internas
+    publicPath: '/', // ⚠️ ESTO ES CRÍTICO para que funcionen rutas como /login o /dashboard
     clean: true,
   },
   resolve: {
@@ -52,17 +52,17 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './public/index.html',
+      favicon: './public/favicon.ico',
       minify: {
         collapseWhitespace: true,
         removeComments: true,
-        removeRedundantAttributes: true,
         useShortDoctype: true,
         removeEmptyAttributes: true,
-        removeStyleLinkTypeAttributes: true,
-        keepClosingSlash: true,
-        minifyJS: true,
+        removeRedundantAttributes: true,
         minifyCSS: true,
+        minifyJS: true,
         minifyURLs: true,
+        keepClosingSlash: true,
       },
     }),
     new MiniCssExtractPlugin({

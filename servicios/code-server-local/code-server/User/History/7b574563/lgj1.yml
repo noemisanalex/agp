@@ -1,0 +1,27 @@
+tunnel: 4708f934-f025-4300-ab05-73630c7cea91
+credentials-file: /etc/cloudflared/4708f934-f025-4300-ab05-73630c7cea91.json
+
+ingress:
+  - hostname: www.autogestionpro.com
+    service: http://frontend:80
+  - hostname: code.autogestionpro.com
+    service: http://code-server:8080
+  - hostname: phpmyadmin.autogestionpro.com
+    service: http://phpmyadmin:80
+  - hostname: n8n.autogestionpro.com
+    service: http://n8n:5678
+  - hostname: vaultwarden.autogestionpro.com
+    service: http://vaultwarden:80
+  - hostname: node.autogestionpro.com
+    service: http://nodered:1880
+  - hostname: proxy.autogestionpro.com
+    service: http://proxy:81
+  - hostname: portainer.autogestionpro.com
+    service: http://portainer:9000
+  - hostname: home.autogestionpro.com
+    service: http://homeassistant:8123
+  - hostname: metrics.autogestionpro.com
+    service: http://influxdb:8086
+  - hostname: uptime.autogestionpro.com
+    service: http://uptime-kuma:3001
+  - service: http_status:404
