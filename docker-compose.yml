@@ -18,7 +18,7 @@ services:
     # Puerto expuesto para desarrollo/pruebas o si no se usa proxy inverso
     # Si se accede exclusivamente via NPM/Cloudflared, considera eliminarlo.
     ports:
-      - "3000:3000"
+      - "4000:4000"
     volumes:
       - ./servicios/backend:/app
     env_file:
@@ -433,6 +433,11 @@ services:
     restart: unless-stopped
     ports:
     - "3100:3100"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - agp-net
     labels:

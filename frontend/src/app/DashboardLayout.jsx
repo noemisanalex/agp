@@ -120,5 +120,25 @@ export default function DashboardLayout() {
 
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col h-screen">
+        {/* Header corregido: componente auto-cerrado */}
         <DashboardHeader
-          onSidebar
+          onSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} // Prop agregada
+          headerHeight={headerHeight}
+          onHeaderHeightChange={handleHeaderHeightChange}
+          style={{ height: `${headerHeight}px` }}
+        />
+        
+        {/* Rutas principales */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <Suspense fallback={<div>Cargando...</div>}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/test-firestore" element={<TestFirestore />} />
+            </Routes>
+          </Suspense>
+        </div>
+      </div>
+    </div>
+  );
+}
