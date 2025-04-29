@@ -114,3 +114,4 @@ servicios/mysql/
 servicios/uptime-kuma/
 servicios/cloudflared/letsencrypt/
 servicios/backend/env
+servicios/backend/env
