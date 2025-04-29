@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  code-server:
+    container_name: code-server
+    image: ghcr.io/coder/code-server:latest
+    user: "${UID:-1000}:${GID:-1000}"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/home/coder/.config/code-server
+      - ./data:/home/coder/project
+      - ./extensions:/home/coder/.local/share/code-server/extensions
+      - ./logs:/home/coder/.local/share/code-server/logs
+      - ./workspaces:/home/coder/.local/share/code-server/workspaces
+      - ./User:/home/coder/.local/share/code-server/User
+    environment:
+      - PASSWORD=${CODE_PASSWORD:-opencode}
+      - TZ=Europe/Madrid
+      - LANG=es_ES.UTF-8
+      - LC_ALL=es_ES.UTF-8
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - agp-net
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    command: --locale=es --user-data-dir=/home/coder/.local/share/code-server/User
+
+networks:
+  agp-net:
+    external: true

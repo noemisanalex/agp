@@ -10,7 +10,9 @@
 # --------------------------------------------------------------------------
 
 services:
-  # --- Backend Personalizado ---
+  ################################################
+  #     Backend Personalizado
+  ################################################
   backend:
     build:
       context: ./servicios/backend
@@ -28,8 +30,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-
+  ####################################################
   # --- Proxy Inverso ---
+  #####################################################
   proxy:
     image: jc21/nginx-proxy-manager:latest
     container_name: proxy
@@ -47,8 +50,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-
+  #######################################################
   # --- Túnel Cloudflare ---
+  ###################################################
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
@@ -65,8 +69,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-
+  ##################################################
   # --- Automatización del Hogar ---
+  ################################################
   homeassistant:
     image: homeassistant/home-assistant:stable
     container_name: homeassistant
@@ -80,8 +85,9 @@ services:
       - ./servicios/homeassistant:/config
     labels:
       - "com.centurylinklabs.watchtower.enable=false" # Deshabilitado por el usuario
-
-  # --- Monitorización del Sistema ---
+  ###############################################################
+    # --- Monitorización del Sistema ---
+    ######################################
   glances:
     image: nicolargo/glances:latest
     container_name: glances
@@ -99,8 +105,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-
+  #########################################################
   # --- Actualizador Automático de Contenedores ---
+  #########################################################
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
@@ -113,22 +120,29 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true" # Permitir que Watchtower se actualice a sí mismo
-
+  ######################################################################
   # --- Entorno de Desarrollo ---
+  ####################################################################
+
   code-server:
     container_name: code-server
     image: ghcr.io/coder/code-server:latest
-    # Acceso directo - También puede configurarse en el proxy si se prefiere
     ports:
       - "8080:8080"
     volumes:
-      - code-server-config:/home/coder/.local
-      - ./:/home/coder/agp:cached
-      - ./servicios/code-server-local:/home/coder/.local/share
+      - ./config:/home/coder/.config/code-server
+      - ./data:/home/coder/project
+      - ./extensions:/home/coder/.local/share/code-server/extensions
+      # Volúmenes adicionales para hacer el entorno más persistente
+      - ./logs:/home/coder/.local/share/code-server/logs
+      - ./workspaces:/home/coder/.local/share/code-server/workspaces
+      - ./User:/home/coder/.local/share/code-server/User
     environment:
-      # La contraseña se lee desde .env
       - PASSWORD=${CODE_PASSWORD}
-      - TZ=Europe/Madrid # Zona horaria desde .env, con fallback
+      - TZ=Europe/Madrid
+      # Configurar el idioma en español
+      - LANG=es_ES.UTF-8
+      - LC_ALL=es_ES.UTF-8
     restart: unless-stopped
     env_file:
       - .env
@@ -136,8 +150,11 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
-
+    command: --locale=es --user-data-dir=/home/coder/.local/share/code-server/User
+    
+  #####################################################
   # --- Bases de Datos ---
+  ###################################################
   postgres:
     image: postgres:latest
     container_name: postgres
@@ -168,8 +185,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=false" # Deshabilitado por el usuario
-
+  ##############################################
   # --- Caché en Memoria ---
+  ############################################
   redis:
     image: redis:latest
     container_name: redis
@@ -181,8 +199,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
-
+  ###############################################################
   # --- Automatización y Flujos de Trabajo (n8n) ---
+  ##############################################################
   n8n:
     image: n8nio/n8n:1.88.0 # Considera usar 'n8nio/n8n:latest' para actualizaciones
     container_name: n8n
@@ -257,8 +276,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=false" # Deshabilitado por el usuario
-
+  #############################################
   # --- Gestor de Contraseñas ---
+  ###########################################
   vaultwarden:
     image: vaultwarden/server:latest
     container_name: vaultwarden
@@ -292,8 +312,9 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     # NO exponer puertos directamente, acceder vía proxy (NPM) configurado para el DOMAIN
-
+  #################################################
   # --- Node-RED ---
+  #################################################
   nodered:
     image: nodered/node-red:latest
     container_name: nodered
@@ -311,8 +332,9 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
     # NO exponer puertos directamente, acceder vía proxy (NPM)
-
+  ####################################################
   # --- Gestión de Docker ---
+  ##################################################
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
@@ -329,8 +351,9 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-
+  ################################################
   # --- Broker MQTT ---
+  ###############################################
   mosquitto:
     image: eclipse-mosquitto:latest
     container_name: mosquitto
@@ -350,8 +373,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
-
+  ################################################################
   # --- Gestor de Bases de Datos MySQL (Web) ---
+  ###############################################################
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin
@@ -369,8 +393,9 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     # NO exponer puertos directamente, acceder vía proxy (NPM)
-
+  ############################################################
   # --- Base de Datos Time-Series ---
+  ############################################################
   influxdb:
     image: influxdb:latest
     container_name: influxdb
@@ -389,8 +414,9 @@ services:
       - agp-net
     labels:
       - "com.centurylinklabs.watchtower.enable=true" # Deshabilitado por el usuario
-
+  ###############################################################
   # --- Recolector de Métricas ---
+  ################################################################
   telegraf:
     image: telegraf:latest
     container_name: telegraf
@@ -423,8 +449,9 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     user: "65534:65534"  # UID/GID del usuario nobody para evitar errores de permisos
-    
+    ##################################################
     # --- Frontend Personalizado ---
+    ###################################################
   frontend:
     container_name: frontend
     build:
@@ -443,8 +470,9 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     # NO exponer puertos directamente, acceder vía proxy (NPM)
-
+  #################################################
   # --- Monitor de Uptime ---
+  ################################################
   uptime-kuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
@@ -463,8 +491,9 @@ services:
       timeout: 10s
       retries: 5
 
-
+###############################
 # --- Definición de Redes ---
+####################################
 networks:
   agp-net:
     # Indica que la red 'agp-net' debe existir previamente.
